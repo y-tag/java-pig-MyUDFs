@@ -28,28 +28,42 @@ import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 
-public class FeaturesPerceptronBuilder extends StoreFunc {
+public class FeaturesSVMSGDBuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
     private BinaryOnlineClassifier.FeatureConvert builderConvertType =
         BinaryOnlineClassifier.FeatureConvert.HASHING;
+    private SVMSGD.LossType builderLossType = SVMSGD.LossType.LOG;
+    private float builderC  = 1.0f;
+    private long  builderT0 = 1;
     private String modelPath = null;
 
-    public FeaturesPerceptronBuilder() {
+    public FeaturesSVMSGDBuilder() {
     }
 
-    public FeaturesPerceptronBuilder(String modelPath) {
+    public FeaturesSVMSGDBuilder(String modelPath) {
         this.modelPath = modelPath;
     }
 
-    public FeaturesPerceptronBuilder(String featureBit, String convertType) {
+    public FeaturesSVMSGDBuilder(String featureBit, String convertType, String lossType, String C, String t0) {
         this.builderFeatureBit = Integer.parseInt(featureBit);
+        this.builderC  = Float.parseFloat(C);
+        this.builderT0 = Long.parseLong(t0);
 
         if (convertType.equals("PARSING")) {
             this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
         } else {
             this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
         }
+
+        if (lossType.equals("HINGE")) {
+            this.builderLossType = SVMSGD.LossType.HINGE;
+        } else if (lossType.equals("SQUAREDHINGE")) {
+            this.builderLossType = SVMSGD.LossType.SQUAREDHINGE;
+        } else {
+            this.builderLossType = SVMSGD.LossType.LOG;
+        }
+
     }
 
     @Override
@@ -80,7 +94,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
 
     @Override
     public OutputFormat getOutputFormat() {
-        return new FeaturesPerceptronOutputFormat();
+        return new FeaturesSVMSGDOutputFormat();
     }
 
     @Override
@@ -91,7 +105,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
     @Override
     public void setStoreLocation(String location, Job job) throws IOException {
         job.setOutputKeyClass(NullWritable.class);
-        job.setOutputValueClass(Perceptron.class);
+        job.setOutputValueClass(SVMSGD.class);
 
         SequenceFileOutputFormat.setOutputPath(job, new Path(location));
         SequenceFileOutputFormat.setCompressOutput(job, true);
@@ -99,11 +113,11 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
     }
 
-    public class FeaturesPerceptronOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
-        private SequenceFileOutputFormat<NullWritable, Perceptron> outputFormat = null;
+    public class FeaturesSVMSGDOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
+        private SequenceFileOutputFormat<NullWritable, SVMSGD> outputFormat = null;
 
-        public FeaturesPerceptronOutputFormat() {
-            outputFormat = new SequenceFileOutputFormat<NullWritable, Perceptron>();
+        public FeaturesSVMSGDOutputFormat() {
+            outputFormat = new SequenceFileOutputFormat<NullWritable, SVMSGD>();
         }
 
         @Override
@@ -119,27 +133,27 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         @Override
         public RecordWriter<Integer, Map<String, Float>> getRecordWriter(
                 TaskAttemptContext context) throws IOException, InterruptedException {
-            return new FeaturesPerceptronRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, modelPath);
+            return new FeaturesSVMSGDRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, builderLossType, builderC, builderT0, modelPath);
         }
 
     }
 
-    public class FeaturesPerceptronRecordWriter extends RecordWriter<Integer, Map<String, Float>> {
+    public class FeaturesSVMSGDRecordWriter extends RecordWriter<Integer, Map<String, Float>> {
 
         private RecordWriter writer = null;
-        private Perceptron classifier = null;
+        private SVMSGD classifier       = null;
 
-        public FeaturesPerceptronRecordWriter(RecordWriter<NullWritable, Perceptron> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, String modelPath) {
+        public FeaturesSVMSGDRecordWriter(RecordWriter<NullWritable, SVMSGD> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, SVMSGD.LossType lossType, float C, long t0, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {
-                this.classifier = new Perceptron(featureBit, convertType);
+                this.classifier = new SVMSGD(featureBit, convertType, lossType, C, t0);
             } else {
                 try {
-                    List<Perceptron> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), Perceptron.class);
-                    this.classifier = new Perceptron(classifierList);
+                    List<SVMSGD> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), SVMSGD.class);
+                    this.classifier = new SVMSGD(classifierList);
                 } catch(Exception e) {
-                    this.classifier = new Perceptron(featureBit, convertType);
+                    this.classifier = new SVMSGD(featureBit, convertType, lossType, C, t0);
                 }
             }
         }

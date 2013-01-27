@@ -23,8 +23,7 @@ import org.apache.hadoop.fs.Path;
 
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.util.WrappedIOException;
-import org.apache.pig.impl.util.UDFContext; 
+
 public class ClassifyWithBinaryOnlineClassifierVoting extends EvalFunc<Float> {
     private String modelPath = null;
     private List<BinaryOnlineClassifier> classifierList = null;

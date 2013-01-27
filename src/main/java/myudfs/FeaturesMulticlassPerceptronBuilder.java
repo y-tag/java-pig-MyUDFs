@@ -28,27 +28,27 @@ import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 
-public class FeaturesPerceptronBuilder extends StoreFunc {
+public class FeaturesMulticlassPerceptronBuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
-    private BinaryOnlineClassifier.FeatureConvert builderConvertType =
-        BinaryOnlineClassifier.FeatureConvert.HASHING;
+    private MulticlassPerceptron.FeatureConvert builderConvertType =
+        MulticlassPerceptron.FeatureConvert.HASHING;
     private String modelPath = null;
 
-    public FeaturesPerceptronBuilder() {
+    public FeaturesMulticlassPerceptronBuilder() {
     }
 
-    public FeaturesPerceptronBuilder(String modelPath) {
+    public FeaturesMulticlassPerceptronBuilder(String modelPath) {
         this.modelPath = modelPath;
     }
 
-    public FeaturesPerceptronBuilder(String featureBit, String convertType) {
+    public FeaturesMulticlassPerceptronBuilder(String featureBit, String convertType) {
         this.builderFeatureBit = Integer.parseInt(featureBit);
 
         if (convertType.equals("PARSING")) {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
+            this.builderConvertType = MulticlassPerceptron.FeatureConvert.PARSING;
         } else {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
+            this.builderConvertType = MulticlassPerceptron.FeatureConvert.HASHING;
         }
     }
 
@@ -61,7 +61,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         } catch (ExecException ee) {
             throw ee;
         }
-        Integer key = (Integer)field;
+        String key = (String)field;
 
         try {
             field = f.get(1);
@@ -80,7 +80,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
 
     @Override
     public OutputFormat getOutputFormat() {
-        return new FeaturesPerceptronOutputFormat();
+        return new FeaturesMulticlassPerceptronOutputFormat();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
     @Override
     public void setStoreLocation(String location, Job job) throws IOException {
         job.setOutputKeyClass(NullWritable.class);
-        job.setOutputValueClass(Perceptron.class);
+        job.setOutputValueClass(MulticlassPerceptron.class);
 
         SequenceFileOutputFormat.setOutputPath(job, new Path(location));
         SequenceFileOutputFormat.setCompressOutput(job, true);
@@ -99,11 +99,11 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
     }
 
-    public class FeaturesPerceptronOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
-        private SequenceFileOutputFormat<NullWritable, Perceptron> outputFormat = null;
+    public class FeaturesMulticlassPerceptronOutputFormat extends FileOutputFormat<String, Map<String, Float>> {
+        private SequenceFileOutputFormat<NullWritable, MulticlassPerceptron> outputFormat = null;
 
-        public FeaturesPerceptronOutputFormat() {
-            outputFormat = new SequenceFileOutputFormat<NullWritable, Perceptron>();
+        public FeaturesMulticlassPerceptronOutputFormat() {
+            outputFormat = new SequenceFileOutputFormat<NullWritable, MulticlassPerceptron>();
         }
 
         @Override
@@ -117,29 +117,29 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         }
 
         @Override
-        public RecordWriter<Integer, Map<String, Float>> getRecordWriter(
+        public RecordWriter<String, Map<String, Float>> getRecordWriter(
                 TaskAttemptContext context) throws IOException, InterruptedException {
-            return new FeaturesPerceptronRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, modelPath);
+            return new FeaturesMulticlassPerceptronRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, modelPath);
         }
 
     }
 
-    public class FeaturesPerceptronRecordWriter extends RecordWriter<Integer, Map<String, Float>> {
+    public class FeaturesMulticlassPerceptronRecordWriter extends RecordWriter<String, Map<String, Float>> {
 
         private RecordWriter writer = null;
-        private Perceptron classifier = null;
+        private MulticlassPerceptron classifier = null;
 
-        public FeaturesPerceptronRecordWriter(RecordWriter<NullWritable, Perceptron> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, String modelPath) {
-            this.writer     = writer;
+        public FeaturesMulticlassPerceptronRecordWriter(RecordWriter<NullWritable, MulticlassPerceptron> writer, int featureBit, MulticlassPerceptron.FeatureConvert convertType, String modelPath) {
+            this.writer = writer;
 
             if (modelPath == null) {
-                this.classifier = new Perceptron(featureBit, convertType);
+                this.classifier = new MulticlassPerceptron(featureBit, convertType);
             } else {
                 try {
-                    List<Perceptron> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), Perceptron.class);
-                    this.classifier = new Perceptron(classifierList);
+                    List<MulticlassPerceptron> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), MulticlassPerceptron.class);
+                    this.classifier = new MulticlassPerceptron(classifierList);
                 } catch(Exception e) {
-                    this.classifier = new Perceptron(featureBit, convertType);
+                    this.classifier = new MulticlassPerceptron(featureBit, convertType);
                 }
             }
         }
@@ -151,7 +151,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         }
 
         @Override
-        public void write(Integer k, Map<String, Float> v) throws IOException, InterruptedException {
+        public void write(String k, Map<String, Float> v) throws IOException, InterruptedException {
             classifier.update(k, v);
         }
 

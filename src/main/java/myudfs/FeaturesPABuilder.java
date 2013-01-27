@@ -92,7 +92,7 @@ public class FeaturesPABuilder extends StoreFunc {
 
     @Override
     public OutputFormat getOutputFormat() {
-        return new FeaturesPAClassifierOutputFormat();
+        return new FeaturesPAOutputFormat();
     }
 
     @Override
@@ -111,10 +111,10 @@ public class FeaturesPABuilder extends StoreFunc {
         SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
     }
 
-    public class FeaturesPAClassifierOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
+    public class FeaturesPAOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
         private SequenceFileOutputFormat<NullWritable, PA> outputFormat = null;
 
-        public FeaturesPAClassifierOutputFormat() {
+        public FeaturesPAOutputFormat() {
             outputFormat = new SequenceFileOutputFormat<NullWritable, PA>();
         }
 
@@ -131,17 +131,17 @@ public class FeaturesPABuilder extends StoreFunc {
         @Override
         public RecordWriter<Integer, Map<String, Float>> getRecordWriter(
                 TaskAttemptContext context) throws IOException, InterruptedException {
-            return new FeaturesPAClassifierRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, builderPAType, builderC, modelPath);
+            return new FeaturesPARecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, builderPAType, builderC, modelPath);
         }
 
     }
 
-    public class FeaturesPAClassifierRecordWriter extends RecordWriter<Integer, Map<String, Float>> {
+    public class FeaturesPARecordWriter extends RecordWriter<Integer, Map<String, Float>> {
 
         private RecordWriter writer = null;
         private PA classifier       = null;
 
-        public FeaturesPAClassifierRecordWriter(RecordWriter<NullWritable, PA> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, PA.PAType paType, float C, String modelPath) {
+        public FeaturesPARecordWriter(RecordWriter<NullWritable, PA> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, PA.PAType paType, float C, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {

@@ -49,7 +49,7 @@ public class SVMLightLoader extends LoadFunc {
             if (! nextExist) {
                 return null;
             }
-            Integer key = (Integer)in.getCurrentKey();
+            String key = (String)in.getCurrentKey();
             Map<String, Float> val = (HashMap<String, Float>)in.getCurrentValue();
 
             if (mProtoTuple == null) {
@@ -86,7 +86,7 @@ public class SVMLightLoader extends LoadFunc {
         FileInputFormat.setInputPaths(job, location);
     }
 
-    public class SVMLightInputFormat extends FileInputFormat<Integer, HashMap<String, Float>> {
+    public class SVMLightInputFormat extends FileInputFormat<String, HashMap<String, Float>> {
 
         public SVMLightInputFormat() {
         }
@@ -107,9 +107,9 @@ public class SVMLightLoader extends LoadFunc {
 
     }
 
-    public class SVMLightRecordReader extends RecordReader<Integer, HashMap<String, Float>> {
+    public class SVMLightRecordReader extends RecordReader<String, HashMap<String, Float>> {
         RecordReader<LongWritable,Text> textReader = null;
-        Integer currentKey = null;
+        String currentKey = null;
         HashMap<String, Float> currentVal = null;
 
         public SVMLightRecordReader(RecordReader<LongWritable,Text> textReader) {
@@ -128,7 +128,7 @@ public class SVMLightLoader extends LoadFunc {
         }
 
         @Override
-        public Integer getCurrentKey() throws IOException, InterruptedException {
+        public String getCurrentKey() throws IOException, InterruptedException {
             return currentKey;
         }
 
@@ -155,7 +155,7 @@ public class SVMLightLoader extends LoadFunc {
                 StringTokenizer st = new StringTokenizer(value.toString(), " ");
 
                 if (st.hasMoreTokens()) {
-                    currentKey = Integer.parseInt(st.nextToken());
+                    currentKey = st.nextToken();
                 }
 
                 currentVal = new HashMap<String, Float>();

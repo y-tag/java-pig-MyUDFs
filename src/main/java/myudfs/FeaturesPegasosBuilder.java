@@ -28,28 +28,42 @@ import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 
-public class FeaturesPerceptronBuilder extends StoreFunc {
+public class FeaturesPegasosBuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
     private BinaryOnlineClassifier.FeatureConvert builderConvertType =
         BinaryOnlineClassifier.FeatureConvert.HASHING;
+    private Pegasos.LossType builderLossType = Pegasos.LossType.LOG;
+    private float builderC = 1.0f;
+    private int   builderK = 16;
     private String modelPath = null;
 
-    public FeaturesPerceptronBuilder() {
+    public FeaturesPegasosBuilder() {
     }
 
-    public FeaturesPerceptronBuilder(String modelPath) {
+    public FeaturesPegasosBuilder(String modelPath) {
         this.modelPath = modelPath;
     }
 
-    public FeaturesPerceptronBuilder(String featureBit, String convertType) {
+    public FeaturesPegasosBuilder(String featureBit, String convertType, String lossType, String C, String k) {
         this.builderFeatureBit = Integer.parseInt(featureBit);
+        this.builderC = Float.parseFloat(C);
+        this.builderK = Integer.parseInt(k);
 
         if (convertType.equals("PARSING")) {
             this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
         } else {
             this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
         }
+
+        if (lossType.equals("HINGE")) {
+            this.builderLossType = Pegasos.LossType.HINGE;
+        } else if (lossType.equals("SQUAREDHINGE")) {
+            this.builderLossType = Pegasos.LossType.SQUAREDHINGE;
+        } else {
+            this.builderLossType = Pegasos.LossType.LOG;
+        }
+
     }
 
     @Override
@@ -80,7 +94,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
 
     @Override
     public OutputFormat getOutputFormat() {
-        return new FeaturesPerceptronOutputFormat();
+        return new FeaturesPegasosOutputFormat();
     }
 
     @Override
@@ -91,7 +105,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
     @Override
     public void setStoreLocation(String location, Job job) throws IOException {
         job.setOutputKeyClass(NullWritable.class);
-        job.setOutputValueClass(Perceptron.class);
+        job.setOutputValueClass(Pegasos.class);
 
         SequenceFileOutputFormat.setOutputPath(job, new Path(location));
         SequenceFileOutputFormat.setCompressOutput(job, true);
@@ -99,11 +113,11 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
     }
 
-    public class FeaturesPerceptronOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
-        private SequenceFileOutputFormat<NullWritable, Perceptron> outputFormat = null;
+    public class FeaturesPegasosOutputFormat extends FileOutputFormat<Integer, Map<String, Float>> {
+        private SequenceFileOutputFormat<NullWritable, Pegasos> outputFormat = null;
 
-        public FeaturesPerceptronOutputFormat() {
-            outputFormat = new SequenceFileOutputFormat<NullWritable, Perceptron>();
+        public FeaturesPegasosOutputFormat() {
+            outputFormat = new SequenceFileOutputFormat<NullWritable, Pegasos>();
         }
 
         @Override
@@ -119,27 +133,27 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         @Override
         public RecordWriter<Integer, Map<String, Float>> getRecordWriter(
                 TaskAttemptContext context) throws IOException, InterruptedException {
-            return new FeaturesPerceptronRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, modelPath);
+            return new FeaturesPegasosRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, builderLossType, builderC, builderK, modelPath);
         }
 
     }
 
-    public class FeaturesPerceptronRecordWriter extends RecordWriter<Integer, Map<String, Float>> {
+    public class FeaturesPegasosRecordWriter extends RecordWriter<Integer, Map<String, Float>> {
 
         private RecordWriter writer = null;
-        private Perceptron classifier = null;
+        private Pegasos classifier       = null;
 
-        public FeaturesPerceptronRecordWriter(RecordWriter<NullWritable, Perceptron> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, String modelPath) {
+        public FeaturesPegasosRecordWriter(RecordWriter<NullWritable, Pegasos> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, Pegasos.LossType lossType, float C, int k, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {
-                this.classifier = new Perceptron(featureBit, convertType);
+                this.classifier = new Pegasos(featureBit, convertType, lossType, C, k);
             } else {
                 try {
-                    List<Perceptron> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), Perceptron.class);
-                    this.classifier = new Perceptron(classifierList);
+                    List<Pegasos> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), Pegasos.class);
+                    this.classifier = new Pegasos(classifierList);
                 } catch(Exception e) {
-                    this.classifier = new Perceptron(featureBit, convertType);
+                    this.classifier = new Pegasos(featureBit, convertType, lossType, C, k);
                 }
             }
         }

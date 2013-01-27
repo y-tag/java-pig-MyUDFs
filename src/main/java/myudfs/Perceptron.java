@@ -37,6 +37,7 @@ public class Perceptron extends BinaryOnlineClassifier {
         }
         this.convertType = classifierList.get(0).convertType;
         this.converter = getStrToIntConverter(this.convertType);
+        this.bias = classifierList.get(0).bias;
 
         int featureNum = 1 << this.featureBit;
         this.weightArray = new float[featureNum];
@@ -63,7 +64,12 @@ public class Perceptron extends BinaryOnlineClassifier {
                 Float v = features.get(key);
                 weightArray[k & bitMask] += y * v;
             }
+
+            if (bias > 0.0f) {
+                weightArray[bitMask] += y * bias;
+            }
         }
+
     }
 
 }

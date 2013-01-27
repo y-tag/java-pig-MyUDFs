@@ -23,7 +23,7 @@ public class ModelReader {
 
     public static <T extends Writable> List<T> readModelsFromPath(Path modelPath, Class<T> targetClass) throws IOException, FileNotFoundException {
         FileSystem fs = FileSystem.get(UDFContext.getUDFContext().getJobConf());
-        List<Path> fileList = MyUDFUtil.getFileList(fs, modelPath);
+        List<Path> fileList = getFileList(fs, modelPath);
 
         List<T> classifierList = new ArrayList<T>();
         for (int i = 0; i < fileList.size(); i++) {
@@ -53,6 +53,22 @@ public class ModelReader {
         }
 
         return val;
+    }
+
+    static public List<Path> getFileList(FileSystem fs, Path path) throws IOException {
+        List<Path> fileList = new ArrayList<Path>();
+        if (fs.exists(path)) {
+            if (fs.getFileStatus(path).isDir()) {
+                FileStatus[] status = fs.listStatus(path);
+                for (int i = 0; i < status.length; i++) {
+                    fileList.addAll(getFileList(fs, status[i].getPath()));
+                }
+            } else if (path.getName().startsWith("part")) {
+                fileList.add(path);
+            }
+        }
+
+        return fileList;
     }
 
 }

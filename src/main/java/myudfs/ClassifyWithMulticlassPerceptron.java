@@ -24,27 +24,27 @@ import org.apache.hadoop.fs.Path;
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.Tuple;
 
-public class ClassifyWithBinaryOnlineClassifier extends EvalFunc<Float> {
+public class ClassifyWithMulticlassPerceptron extends EvalFunc<String> {
     private String modelPath = null;
-    private BinaryOnlineClassifier classifier = null;
+    private MulticlassPerceptron classifier = null;
 
-    public ClassifyWithBinaryOnlineClassifier(String modelPath) {
+    public ClassifyWithMulticlassPerceptron(String modelPath) {
         this.modelPath = modelPath;
     }
 
-    public Float exec(Tuple input) throws IOException {
+    public String exec(Tuple input) throws IOException {
         if (classifier == null) {
-            List<BinaryOnlineClassifier> classifierList = ModelReader.readModelsFromPath(new Path(this.modelPath), BinaryOnlineClassifier.class);
-            classifier = new BinaryOnlineClassifier(classifierList);
+            List<MulticlassPerceptron> classifierList = ModelReader.readModelsFromPath(new Path(this.modelPath), MulticlassPerceptron.class);
+            classifier = new MulticlassPerceptron(classifierList);
         }
         
         if (input == null || input.size() == 0) {
-            return 0.0f;
+            return "";
         }
 
         Map<String, Float> features = (Map<String, Float>)input.get(0);
 
-        return classifier.predict(features);
+        return classifier.classify(features);
     }
 
 }
