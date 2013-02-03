@@ -20,21 +20,17 @@ public class BinaryOnlineClassifier implements Writable {
     protected float[] weightArray = null;
     protected float bias = 0.0f;
 
-    protected FeatureConvert convertType = FeatureConvert.PARSING;
-    protected StrToIntConverter converter = new StrToIntConverterWithParsing();
-
-    enum FeatureConvert {
-        PARSING, HASHING
-    }
+    protected Convert.FeatureConvert convertType = Convert.FeatureConvert.PARSING;
+    protected Convert.StrToIntConverter converter = Convert.getStrToIntConverter(convertType);
 
     public BinaryOnlineClassifier() {
     }
     
     public BinaryOnlineClassifier(int featureBit) {
-        this(featureBit, FeatureConvert.PARSING);
+        this(featureBit, Convert.FeatureConvert.PARSING);
     }
 
-    public BinaryOnlineClassifier(int featureBit, FeatureConvert convertType) {
+    public BinaryOnlineClassifier(int featureBit, Convert.FeatureConvert convertType) {
         this.featureBit = featureBit;
 
         int featureNum = 1 << featureBit;
@@ -43,7 +39,7 @@ public class BinaryOnlineClassifier implements Writable {
         this.bias = 0.0f;
 
         this.convertType = convertType;
-        this.converter = getStrToIntConverter(convertType);
+        this.converter = Convert.getStrToIntConverter(convertType);
     }
 
     public BinaryOnlineClassifier(List<BinaryOnlineClassifier> classifierList) {
@@ -58,7 +54,7 @@ public class BinaryOnlineClassifier implements Writable {
             }
         }
         this.convertType = classifierList.get(0).convertType;
-        this.converter = getStrToIntConverter(this.convertType);
+        this.converter = Convert.getStrToIntConverter(this.convertType);
         this.bias = classifierList.get(0).bias;
 
         int featureNum = 1 << this.featureBit;
@@ -95,7 +91,7 @@ public class BinaryOnlineClassifier implements Writable {
         this.featureBit = in.readInt();
         map.readFields(in);
         this.bias = in.readFloat();
-        this.convertType = WritableUtils.readEnum(in, FeatureConvert.class);
+        this.convertType = WritableUtils.readEnum(in, Convert.FeatureConvert.class);
 
         int featureNum = 1 << this.featureBit;
         this.bitMask = featureNum - 1;
@@ -107,7 +103,7 @@ public class BinaryOnlineClassifier implements Writable {
             weightArray[i & bitMask] += f;
         }
         
-        this.converter = getStrToIntConverter(this.convertType);
+        this.converter = Convert.getStrToIntConverter(this.convertType);
     }
 
     public float predict(Map<String, Float> features) {
@@ -133,33 +129,6 @@ public class BinaryOnlineClassifier implements Writable {
     public void update(Integer label, Map<String, Float> features) {
         float predictedValue = predict(features);
         updateWithPredictedValue(label, features, predictedValue);
-    }
-
-    protected StrToIntConverter getStrToIntConverter(FeatureConvert convertType) {
-        switch (convertType) {
-            case PARSING:
-                return new StrToIntConverterWithParsing();
-            case HASHING:
-                return new StrToIntConverterWithHashing();
-            default:
-                return new StrToIntConverterWithHashing();
-        }
-    }
-
-    interface StrToIntConverter {
-        int convert(String str);
-    }
-
-    public class StrToIntConverterWithParsing implements StrToIntConverter {
-        public int convert(String str) {
-            return Integer.parseInt(str);
-        }
-    }
-
-    public class StrToIntConverterWithHashing implements StrToIntConverter {
-        public int convert(String str) {
-            return Hashing.murmur3_32().hashString(str).asInt();
-        }
     }
 
 }

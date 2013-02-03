@@ -31,8 +31,7 @@ import org.apache.pig.data.Tuple;
 public class FeaturesPerceptronBuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
-    private BinaryOnlineClassifier.FeatureConvert builderConvertType =
-        BinaryOnlineClassifier.FeatureConvert.HASHING;
+    private Convert.FeatureConvert builderConvertType = Convert.FeatureConvert.HASHING;
     private String modelPath = null;
 
     public FeaturesPerceptronBuilder() {
@@ -46,9 +45,9 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         this.builderFeatureBit = Integer.parseInt(featureBit);
 
         if (convertType.equals("PARSING")) {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
+            this.builderConvertType = Convert.FeatureConvert.PARSING;
         } else {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
+            this.builderConvertType = Convert.FeatureConvert.HASHING;
         }
     }
 
@@ -129,7 +128,7 @@ public class FeaturesPerceptronBuilder extends StoreFunc {
         private RecordWriter writer = null;
         private Perceptron classifier = null;
 
-        public FeaturesPerceptronRecordWriter(RecordWriter<NullWritable, Perceptron> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, String modelPath) {
+        public FeaturesPerceptronRecordWriter(RecordWriter<NullWritable, Perceptron> writer, int featureBit, Convert.FeatureConvert convertType, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {

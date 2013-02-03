@@ -13,5 +13,9 @@ training = load '$TRAINFILE' using myudfs.SVMLightLoader() as (label: chararray,
 training = foreach training generate label, features, Random() as random;
 training = order training by random parallel $PARTITIONS;
 training = foreach training generate label, features;
-store training into '$OUTDIR' using myudfs.FeaturesMulticlassPerceptronBuilder('$FEATUREBIT', '$FEATURECONVERT');
+
+-- store training into '$OUTDIR' using myudfs.FeaturesMulticlassPerceptronBuilder('$FEATUREBIT', '$FEATURECONVERT');
+store training into '$OUTDIR' using myudfs.FeaturesMulticlassPABuilder('$FEATUREBIT', '$FEATURECONVERT', 'PA2', '1.0');
+
 -- store training into 'model2/' using myudfs.FeaturesPerceptronBuilder('model/');
+-- store training into 'model2/' using myudfs.FeaturesPABuilder('model/');

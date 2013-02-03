@@ -31,9 +31,8 @@ import org.apache.pig.data.Tuple;
 public class FeaturesSVMSGDBuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
-    private BinaryOnlineClassifier.FeatureConvert builderConvertType =
-        BinaryOnlineClassifier.FeatureConvert.HASHING;
-    private SVMSGD.LossType builderLossType = SVMSGD.LossType.LOG;
+    private Convert.FeatureConvert builderConvertType = Convert.FeatureConvert.HASHING;
+    private LossFunction.LossType builderLossType = LossFunction.LossType.LOG;
     private float builderC  = 1.0f;
     private long  builderT0 = 1;
     private String modelPath = null;
@@ -51,17 +50,17 @@ public class FeaturesSVMSGDBuilder extends StoreFunc {
         this.builderT0 = Long.parseLong(t0);
 
         if (convertType.equals("PARSING")) {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
+            this.builderConvertType = Convert.FeatureConvert.PARSING;
         } else {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
+            this.builderConvertType = Convert.FeatureConvert.HASHING;
         }
 
         if (lossType.equals("HINGE")) {
-            this.builderLossType = SVMSGD.LossType.HINGE;
+            this.builderLossType = LossFunction.LossType.HINGE;
         } else if (lossType.equals("SQUAREDHINGE")) {
-            this.builderLossType = SVMSGD.LossType.SQUAREDHINGE;
+            this.builderLossType = LossFunction.LossType.SQUAREDHINGE;
         } else {
-            this.builderLossType = SVMSGD.LossType.LOG;
+            this.builderLossType = LossFunction.LossType.LOG;
         }
 
     }
@@ -143,7 +142,7 @@ public class FeaturesSVMSGDBuilder extends StoreFunc {
         private RecordWriter writer = null;
         private SVMSGD classifier       = null;
 
-        public FeaturesSVMSGDRecordWriter(RecordWriter<NullWritable, SVMSGD> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, SVMSGD.LossType lossType, float C, long t0, String modelPath) {
+        public FeaturesSVMSGDRecordWriter(RecordWriter<NullWritable, SVMSGD> writer, int featureBit, Convert.FeatureConvert convertType, LossFunction.LossType lossType, float C, long t0, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {

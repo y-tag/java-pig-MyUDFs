@@ -20,7 +20,7 @@ public class Perceptron extends BinaryOnlineClassifier {
         super(featureBit);
     }
 
-    public Perceptron(int featureBit, FeatureConvert convertType) {
+    public Perceptron(int featureBit, Convert.FeatureConvert convertType) {
         super(featureBit, convertType);
     }
 
@@ -36,7 +36,7 @@ public class Perceptron extends BinaryOnlineClassifier {
             }
         }
         this.convertType = classifierList.get(0).convertType;
-        this.converter = getStrToIntConverter(this.convertType);
+        this.converter = Convert.getStrToIntConverter(this.convertType);
         this.bias = classifierList.get(0).bias;
 
         int featureNum = 1 << this.featureBit;

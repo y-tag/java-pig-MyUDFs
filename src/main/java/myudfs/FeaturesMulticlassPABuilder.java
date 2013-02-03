@@ -28,26 +28,37 @@ import org.apache.pig.PigException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.Tuple;
 
-public class FeaturesMulticlassPerceptronBuilder extends StoreFunc {
+public class FeaturesMulticlassPABuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
     private Convert.FeatureConvert builderConvertType = Convert.FeatureConvert.HASHING;
+    private PACommon.PAType builderPAType = PACommon.PAType.PA;
+    private float builderC = 1.0f;
     private String modelPath = null;
 
-    public FeaturesMulticlassPerceptronBuilder() {
+    public FeaturesMulticlassPABuilder() {
     }
 
-    public FeaturesMulticlassPerceptronBuilder(String modelPath) {
+    public FeaturesMulticlassPABuilder(String modelPath) {
         this.modelPath = modelPath;
     }
 
-    public FeaturesMulticlassPerceptronBuilder(String featureBit, String convertType) {
+    public FeaturesMulticlassPABuilder(String featureBit, String convertType, String paType, String C) {
         this.builderFeatureBit = Integer.parseInt(featureBit);
+        this.builderC = Float.parseFloat(C);
 
         if (convertType.equals("PARSING")) {
             this.builderConvertType = Convert.FeatureConvert.PARSING;
         } else {
             this.builderConvertType = Convert.FeatureConvert.HASHING;
+        }
+
+        if (paType.equals("PA1")) {
+            this.builderPAType = PACommon.PAType.PA1;
+        } else if (paType.equals("PA2")) {
+            this.builderPAType = PACommon.PAType.PA2;
+        } else {
+            this.builderPAType = PACommon.PAType.PA;
         }
     }
 
@@ -79,7 +90,7 @@ public class FeaturesMulticlassPerceptronBuilder extends StoreFunc {
 
     @Override
     public OutputFormat getOutputFormat() {
-        return new FeaturesMulticlassPerceptronOutputFormat();
+        return new FeaturesMulticlassPAOutputFormat();
     }
 
     @Override
@@ -90,7 +101,7 @@ public class FeaturesMulticlassPerceptronBuilder extends StoreFunc {
     @Override
     public void setStoreLocation(String location, Job job) throws IOException {
         job.setOutputKeyClass(NullWritable.class);
-        job.setOutputValueClass(MulticlassPerceptron.class);
+        job.setOutputValueClass(MulticlassPA.class);
 
         SequenceFileOutputFormat.setOutputPath(job, new Path(location));
         SequenceFileOutputFormat.setCompressOutput(job, true);
@@ -98,11 +109,11 @@ public class FeaturesMulticlassPerceptronBuilder extends StoreFunc {
         SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
     }
 
-    public class FeaturesMulticlassPerceptronOutputFormat extends FileOutputFormat<String, Map<String, Float>> {
-        private SequenceFileOutputFormat<NullWritable, MulticlassPerceptron> outputFormat = null;
+    public class FeaturesMulticlassPAOutputFormat extends FileOutputFormat<String, Map<String, Float>> {
+        private SequenceFileOutputFormat<NullWritable, MulticlassPA> outputFormat = null;
 
-        public FeaturesMulticlassPerceptronOutputFormat() {
-            outputFormat = new SequenceFileOutputFormat<NullWritable, MulticlassPerceptron>();
+        public FeaturesMulticlassPAOutputFormat() {
+            outputFormat = new SequenceFileOutputFormat<NullWritable, MulticlassPA>();
         }
 
         @Override
@@ -118,27 +129,27 @@ public class FeaturesMulticlassPerceptronBuilder extends StoreFunc {
         @Override
         public RecordWriter<String, Map<String, Float>> getRecordWriter(
                 TaskAttemptContext context) throws IOException, InterruptedException {
-            return new FeaturesMulticlassPerceptronRecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, modelPath);
+            return new FeaturesMulticlassPARecordWriter(outputFormat.getRecordWriter(context), builderFeatureBit, builderConvertType, builderPAType, builderC, modelPath);
         }
 
     }
 
-    public class FeaturesMulticlassPerceptronRecordWriter extends RecordWriter<String, Map<String, Float>> {
+    public class FeaturesMulticlassPARecordWriter extends RecordWriter<String, Map<String, Float>> {
 
         private RecordWriter writer = null;
-        private MulticlassPerceptron classifier = null;
+        private MulticlassPA classifier = null;
 
-        public FeaturesMulticlassPerceptronRecordWriter(RecordWriter<NullWritable, MulticlassPerceptron> writer, int featureBit, Convert.FeatureConvert convertType, String modelPath) {
+        public FeaturesMulticlassPARecordWriter(RecordWriter<NullWritable, MulticlassPA> writer, int featureBit, Convert.FeatureConvert convertType, PACommon.PAType paType, float C, String modelPath) {
             this.writer = writer;
 
             if (modelPath == null) {
-                this.classifier = new MulticlassPerceptron(featureBit, convertType);
+                this.classifier = new MulticlassPA(featureBit, convertType, paType, C);
             } else {
                 try {
-                    List<MulticlassPerceptron> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), MulticlassPerceptron.class);
-                    this.classifier = new MulticlassPerceptron(classifierList);
+                    List<MulticlassPA> classifierList = ModelReader.readModelsFromPath(new Path(modelPath), MulticlassPA.class);
+                    this.classifier = new MulticlassPA(classifierList);
                 } catch(Exception e) {
-                    this.classifier = new MulticlassPerceptron(featureBit, convertType);
+                    this.classifier = new MulticlassPA(featureBit, convertType, paType, C);
                 }
             }
         }

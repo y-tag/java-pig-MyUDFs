@@ -13,25 +13,21 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 
 public class PA extends BinaryOnlineClassifier {
-    protected PAType paType = PAType.PA;
-    protected EtaCalculatorPA etaCalculator = new EtaCalculatorPA();
+    protected PACommon.PAType paType = PACommon.PAType.PA;
+    protected PACommon.EtaCalculatorPA etaCalculator = PACommon.getEtaCalculator(paType);
     protected float C = 1.0f;
-
-    enum PAType {
-        PA, PA1, PA2
-    }
 
     public PA() {
     }
 
-    public PA(int featureBit, PAType paType, float C) {
-        this(featureBit, FeatureConvert.PARSING, paType, C);
+    public PA(int featureBit, PACommon.PAType paType, float C) {
+        this(featureBit, Convert.FeatureConvert.PARSING, paType, C);
     }
 
-    public PA(int featureBit, FeatureConvert convertType, PAType paType, float C) {
+    public PA(int featureBit, Convert.FeatureConvert convertType, PACommon.PAType paType, float C) {
         super(featureBit, convertType);
         this.paType = paType;
-        this.etaCalculator = getEtaCalculator(paType);
+        this.etaCalculator = PACommon.getEtaCalculator(paType);
         this.C    = C;
     }
 
@@ -47,10 +43,10 @@ public class PA extends BinaryOnlineClassifier {
             }
         }
         this.convertType = classifierList.get(0).convertType;
-        this.converter = getStrToIntConverter(this.convertType);
+        this.converter = Convert.getStrToIntConverter(this.convertType);
         this.bias = classifierList.get(0).bias;
         this.paType = classifierList.get(0).paType;
-        this.etaCalculator = getEtaCalculator(this.paType);
+        this.etaCalculator = PACommon.getEtaCalculator(this.paType);
         this.C = classifierList.get(0).C;
 
         int featureNum = 1 << this.featureBit;
@@ -80,10 +76,10 @@ public class PA extends BinaryOnlineClassifier {
     public void readFields(DataInput in) throws IOException {
         super.readFields(in);
 
-        this.paType = WritableUtils.readEnum(in, PAType.class);
+        this.paType = WritableUtils.readEnum(in, PACommon.PAType.class);
         this.C = in.readFloat();
 
-        this.etaCalculator = getEtaCalculator(this.paType);
+        this.etaCalculator = PACommon.getEtaCalculator(this.paType);
     }
 
     @Override
@@ -126,7 +122,7 @@ public class PA extends BinaryOnlineClassifier {
         int y = label > 0 ? +1 : -1;
         float loss = 1.0f - y * predictedValue;
 
-        if (loss > 0.0) {
+        if (loss > 0.0 || paType == PACommon.PAType.PALOG) {
             float eta = etaCalculator.calc(loss, squared_norm, this.C);
             for (String key : features.keySet()) {
                 int   k = converter.convert(key);
@@ -137,42 +133,6 @@ public class PA extends BinaryOnlineClassifier {
             if (bias > 0.0f) {
                 weightArray[bitMask] += eta * y * bias;
             }
-        }
-    }
-
-    private EtaCalculatorPA getEtaCalculator(PAType paType) {
-        switch (paType) {
-            case PA1:
-                return new EtaCalculatorPA1();
-            case PA2:
-                return new EtaCalculatorPA2();
-            default:
-                return new EtaCalculatorPA();
-        }
-    }
-
-
-    public class EtaCalculatorPA {
-        public float calc(float loss, float squared_norm, float C) {
-            return loss / squared_norm;
-        }
-    }
-
-    public class EtaCalculatorPA1 extends EtaCalculatorPA {
-        @Override
-        public float calc(float loss, float squared_norm, float C) {
-            float eta = loss / squared_norm;
-            if (C < eta) {
-                eta = C;
-            }
-            return eta;
-        }
-    }
-
-    public class EtaCalculatorPA2 extends EtaCalculatorPA {
-        @Override
-        public float calc(float loss, float squared_norm, float C) {
-            return loss / (squared_norm + (0.5f / C));
         }
     }
 

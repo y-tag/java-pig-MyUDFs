@@ -24,18 +24,18 @@ import org.apache.hadoop.fs.Path;
 import org.apache.pig.EvalFunc;
 import org.apache.pig.data.Tuple;
 
-public class ClassifyWithMulticlassPerceptron extends EvalFunc<String> {
+public class ClassifyWithMulticlassOnlineClassifier extends EvalFunc<String> {
     private String modelPath = null;
-    private MulticlassPerceptron classifier = null;
+    private MulticlassOnlineClassifier classifier = null;
 
-    public ClassifyWithMulticlassPerceptron(String modelPath) {
+    public ClassifyWithMulticlassOnlineClassifier(String modelPath) {
         this.modelPath = modelPath;
     }
 
     public String exec(Tuple input) throws IOException {
         if (classifier == null) {
-            List<MulticlassPerceptron> classifierList = ModelReader.readModelsFromPath(new Path(this.modelPath), MulticlassPerceptron.class);
-            classifier = new MulticlassPerceptron(classifierList);
+            List<MulticlassOnlineClassifier> classifierList = ModelReader.readModelsFromPath(new Path(this.modelPath), MulticlassOnlineClassifier.class);
+            classifier = new MulticlassOnlineClassifier(classifierList);
         }
         
         if (input == null || input.size() == 0) {

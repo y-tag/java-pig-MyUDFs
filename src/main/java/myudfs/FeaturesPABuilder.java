@@ -31,9 +31,8 @@ import org.apache.pig.data.Tuple;
 public class FeaturesPABuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
-    private BinaryOnlineClassifier.FeatureConvert builderConvertType =
-        BinaryOnlineClassifier.FeatureConvert.HASHING;
-    private PA.PAType builderPAType = PA.PAType.PA;
+    private Convert.FeatureConvert builderConvertType = Convert.FeatureConvert.HASHING;
+    private PACommon.PAType builderPAType = PACommon.PAType.PA;
     private float builderC = 1.0f;
     private String modelPath = null;
 
@@ -49,17 +48,19 @@ public class FeaturesPABuilder extends StoreFunc {
         this.builderC = Float.parseFloat(C);
 
         if (convertType.equals("PARSING")) {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
+            this.builderConvertType = Convert.FeatureConvert.PARSING;
         } else {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
+            this.builderConvertType = Convert.FeatureConvert.HASHING;
         }
 
         if (paType.equals("PA1")) {
-            this.builderPAType = PA.PAType.PA1;
+            this.builderPAType = PACommon.PAType.PA1;
         } else if (paType.equals("PA2")) {
-            this.builderPAType = PA.PAType.PA2;
+            this.builderPAType = PACommon.PAType.PA2;
+        } else if (paType.equals("PALOG")) {
+            this.builderPAType = PACommon.PAType.PALOG;
         } else {
-            this.builderPAType = PA.PAType.PA;
+            this.builderPAType = PACommon.PAType.PA;
         }
 
     }
@@ -141,7 +142,7 @@ public class FeaturesPABuilder extends StoreFunc {
         private RecordWriter writer = null;
         private PA classifier       = null;
 
-        public FeaturesPARecordWriter(RecordWriter<NullWritable, PA> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, PA.PAType paType, float C, String modelPath) {
+        public FeaturesPARecordWriter(RecordWriter<NullWritable, PA> writer, int featureBit, Convert.FeatureConvert convertType, PACommon.PAType paType, float C, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {

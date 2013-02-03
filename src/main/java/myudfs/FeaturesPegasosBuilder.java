@@ -31,9 +31,8 @@ import org.apache.pig.data.Tuple;
 public class FeaturesPegasosBuilder extends StoreFunc {
     protected RecordWriter writer = null;
     private int builderFeatureBit = 20;
-    private BinaryOnlineClassifier.FeatureConvert builderConvertType =
-        BinaryOnlineClassifier.FeatureConvert.HASHING;
-    private Pegasos.LossType builderLossType = Pegasos.LossType.LOG;
+    private Convert.FeatureConvert builderConvertType = Convert.FeatureConvert.HASHING;
+    private LossFunction.LossType builderLossType = LossFunction.LossType.LOG;
     private float builderC = 1.0f;
     private int   builderK = 16;
     private String modelPath = null;
@@ -51,17 +50,17 @@ public class FeaturesPegasosBuilder extends StoreFunc {
         this.builderK = Integer.parseInt(k);
 
         if (convertType.equals("PARSING")) {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.PARSING;
+            this.builderConvertType = Convert.FeatureConvert.PARSING;
         } else {
-            this.builderConvertType = BinaryOnlineClassifier.FeatureConvert.HASHING;
+            this.builderConvertType = Convert.FeatureConvert.HASHING;
         }
 
         if (lossType.equals("HINGE")) {
-            this.builderLossType = Pegasos.LossType.HINGE;
+            this.builderLossType = LossFunction.LossType.HINGE;
         } else if (lossType.equals("SQUAREDHINGE")) {
-            this.builderLossType = Pegasos.LossType.SQUAREDHINGE;
+            this.builderLossType = LossFunction.LossType.SQUAREDHINGE;
         } else {
-            this.builderLossType = Pegasos.LossType.LOG;
+            this.builderLossType = LossFunction.LossType.LOG;
         }
 
     }
@@ -143,7 +142,7 @@ public class FeaturesPegasosBuilder extends StoreFunc {
         private RecordWriter writer = null;
         private Pegasos classifier       = null;
 
-        public FeaturesPegasosRecordWriter(RecordWriter<NullWritable, Pegasos> writer, int featureBit, BinaryOnlineClassifier.FeatureConvert convertType, Pegasos.LossType lossType, float C, int k, String modelPath) {
+        public FeaturesPegasosRecordWriter(RecordWriter<NullWritable, Pegasos> writer, int featureBit, Convert.FeatureConvert convertType, LossFunction.LossType lossType, float C, int k, String modelPath) {
             this.writer     = writer;
 
             if (modelPath == null) {

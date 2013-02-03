@@ -14,28 +14,24 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 
 public class SVMSGD extends BinaryOnlineClassifier {
-    protected LossType lossType = LossType.LOG;
-    protected LossCalculator lossCalculator = new LossCalculatorLog();
+    protected LossFunction.LossType lossType = LossFunction.LossType.LOG;
+    protected LossFunction.LossCalculator lossCalculator = LossFunction.getLossCalculator(lossType);
     protected float C = 1.0f;
     protected long t0 = 0;
     protected long t  = 0;
     protected float scaleFactor = 1.0f;
 
-    enum LossType {
-        HINGE, SQUAREDHINGE, LOG
-    }
-
     public SVMSGD() {
     }
 
-    public SVMSGD(int featureBit, LossType lossType, float C, long t0) {
-        this(featureBit, FeatureConvert.PARSING, lossType, C, t0);
+    public SVMSGD(int featureBit, LossFunction.LossType lossType, float C, long t0) {
+        this(featureBit, Convert.FeatureConvert.PARSING, lossType, C, t0);
     }
 
-    public SVMSGD(int featureBit, FeatureConvert convertType, LossType lossType, float C, long t0) {
+    public SVMSGD(int featureBit, Convert.FeatureConvert convertType, LossFunction.LossType lossType, float C, long t0) {
         super(featureBit, convertType);
         this.lossType = lossType;
-        this.lossCalculator = getLossCalculator(lossType);
+        this.lossCalculator = LossFunction.getLossCalculator(lossType);
         this.C  = C;
         this.t0 = t0;
         this.t  = 0;
@@ -54,10 +50,10 @@ public class SVMSGD extends BinaryOnlineClassifier {
             }
         }
         this.convertType = classifierList.get(0).convertType;
-        this.converter = getStrToIntConverter(this.convertType);
+        this.converter = Convert.getStrToIntConverter(this.convertType);
         this.bias = classifierList.get(0).bias;
         this.lossType = classifierList.get(0).lossType;
-        this.lossCalculator = getLossCalculator(this.lossType);
+        this.lossCalculator = LossFunction.getLossCalculator(this.lossType);
         this.C = classifierList.get(0).C;
         this.t0 = classifierList.get(0).t;
         this.t  = classifierList.get(0).t;
@@ -93,13 +89,13 @@ public class SVMSGD extends BinaryOnlineClassifier {
     public void readFields(DataInput in) throws IOException {
         super.readFields(in);
 
-        this.lossType = WritableUtils.readEnum(in, LossType.class);
+        this.lossType = WritableUtils.readEnum(in, LossFunction.LossType.class);
         this.C  = in.readFloat();
         this.t0 = in.readLong();
         this.t  = in.readLong();
         this.scaleFactor = 1.0f;
 
-        this.lossCalculator = getLossCalculator(this.lossType);
+        this.lossCalculator = LossFunction.getLossCalculator(this.lossType);
     }
 
     @Override
@@ -136,60 +132,6 @@ public class SVMSGD extends BinaryOnlineClassifier {
                 weightArray[i] *= scaleFactor;
             }
             scaleFactor = 1.0f;
-        }
-    }
-
-    private LossCalculator getLossCalculator(LossType lossType) {
-        switch (lossType) {
-            case HINGE:
-                return new LossCalculatorHinge();
-            case SQUAREDHINGE:
-                return new LossCalculatorSquaredHinge();
-            case LOG:
-                return new LossCalculatorLog();
-            default:
-                return new LossCalculatorLog();
-        }
-    }
-
-    interface LossCalculator {
-        float calcLoss(float z);
-        float calcDLoss(float z);
-    }
-
-    public class LossCalculatorHinge implements LossCalculator{
-        public float calcLoss(float z) {
-            float loss = 1.0f - z;
-            return loss > 0.0f ? loss : 0.0f;
-        }
-        public float calcDLoss(float z) {
-            float loss = 1.0f - z;
-            return loss > 0.0f ? -1.0f : 0.0f;
-        }
-    }
-
-    public class LossCalculatorSquaredHinge implements LossCalculator{
-        public float calcLoss(float z) {
-            float loss = (1.0f - z) * (1.0f - z);
-            return loss > 0.0f ? loss : 0.0f;
-        }
-        public float calcDLoss(float z) {
-            float loss = (1.0f - z) * (1.0f - z);
-            return loss > 0.0f ? -2 * (1.0f - z) : 0.0f;
-        }
-    }
-
-    public class LossCalculatorLog implements LossCalculator{
-        public float calcLoss(float z) {
-            return (float)(Math.log(1.0 + Math.exp(-z)));
-        }
-        public float calcDLoss(float z) {
-            if (z < 0.0f) {
-                return (float)(-1.0 / (1.0 + Math.exp(z)));
-            } else {
-                double ez = Math.exp(-z);
-                return (float)(-ez / (ez + 1.0));
-            }
         }
     }
 
