@@ -3,9 +3,9 @@
 %default MODELDIR 'model/'
 
 register ../../../target/pig_udfs-0.0.1.jar;
-define Classify myudfs.ClassifyWithBinaryOnlineClassifier('$MODELDIR');
--- define Classify myudfs.ClassifyWithBinaryOnlineClassifierVoting('$MODELDIR');
-test = load '$TESTFILE' using myudfs.SVMLightLoader() as (label: int, features: map[]);
+define Classify myorg.pig.evaluation.ClassifyWithBinaryOnlineClassifier('$MODELDIR');
+-- define Classify myorg.pig.evaluation.ClassifyWithBinaryOnlineClassifierVoting('$MODELDIR');
+test = load '$TESTFILE' using myorg.pig.storage.SVMLightLoader() as (label: int, features: map[]);
 predict = foreach test generate label, (Classify(features) > 0 ? 1 : -1) as prediction;
 results = foreach predict generate (label == prediction ? 1 : 0) as matching;
 cnt = group results by matching;

@@ -3,8 +3,8 @@
 %default MODELDIR 'model/'
 
 register ../../../target/pig_udfs-0.0.1.jar;
-define Classify myudfs.ClassifyWithMulticlassOnlineClassifier('$MODELDIR');
-test = load '$TESTFILE' using myudfs.SVMLightLoader() as (label: chararray, features: map[]);
+define Classify myorg.pig.evaluation.ClassifyWithMulticlassOnlineClassifier('$MODELDIR');
+test = load '$TESTFILE' using myorg.pig.storage.SVMLightLoader() as (label: chararray, features: map[]);
 -- test = limit test 10000;
 predict = foreach test generate label, Classify(features) as prediction;
 results = foreach predict generate (label == prediction ? 1 : 0) as matching;
