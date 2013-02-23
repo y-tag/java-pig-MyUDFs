@@ -145,6 +145,9 @@ public class SVMDCD extends BinaryBatchClassifier {
                 int j = i + random.nextInt() % (numData - i);
             }
 
+            float maxPG = -Float.MAX_VALUE;
+            float minPG =  Float.MAX_VALUE;
+
             for (int i = 0; i < numData; i++) {
                 int idx = i;
                 Map<String, Float> x = xArray[idx];
@@ -159,6 +162,9 @@ public class SVMDCD extends BinaryBatchClassifier {
                 } else if (oldAlpha == U) {
                     PG = Math.max(G, 0.0f);
                 }
+
+                maxPG = Math.max(PG, maxPG);
+                minPG = Math.min(PG, minPG);
 
                 if (Math.abs(PG) > 1.0e-10) {
                     float Q = qArray[idx];
@@ -175,6 +181,10 @@ public class SVMDCD extends BinaryBatchClassifier {
                         weightArray[bitMask] += (alpha - oldAlpha) * y * bias;
                     }
                 }
+            }
+
+            if (maxPG - minPG < 1.0e-6) {
+                break;
             }
         }
 
