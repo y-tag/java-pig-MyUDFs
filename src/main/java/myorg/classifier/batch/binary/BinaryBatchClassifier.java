@@ -129,4 +129,16 @@ public class BinaryBatchClassifier implements Writable {
     public void train() {
     }
 
+    @Override
+    public String toString() {
+        String str = "";
+        for (int i = 0; i < weightArray.length; i++) {
+            str += i + ":" + weightArray[i];
+            if (i < weightArray.length - 1) {
+                str += "\n";
+            }
+        }
+        return str;
+    }
+
 }

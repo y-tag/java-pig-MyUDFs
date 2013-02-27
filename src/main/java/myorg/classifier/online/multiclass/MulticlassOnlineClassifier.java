@@ -297,4 +297,23 @@ public class MulticlassOnlineClassifier implements Writable {
         }
     }
 
+    @Override
+    public String toString() {
+        String str = "";
+        for (String l : labelMap.keySet()) {
+            float val = 0.0f;
+            int i = labelMap.get(l).intValue();
+            if (weightArrays[i] != null) {
+                float[] weight = weightArrays[i];
+                for (int j = 0; j < weight.length; j++) {
+                    str += l + "\t" + j + ":" + weight[j];
+                    if (j < weight.length - 1) {
+                        str += "\n";
+                    }
+                }
+            }
+        }
+        return str;
+    }
+
 }

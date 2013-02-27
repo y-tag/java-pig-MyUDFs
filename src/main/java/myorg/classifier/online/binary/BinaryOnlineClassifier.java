@@ -131,4 +131,16 @@ public class BinaryOnlineClassifier implements Writable {
         updateWithPredictedValue(label, features, predictedValue);
     }
 
+    @Override
+    public String toString() {
+        String str = "";
+        for (int i = 0; i < weightArray.length; i++) {
+            str += i + ":" + weightArray[i];
+            if (i < weightArray.length - 1) {
+                str += "\n";
+            }
+        }
+        return str;
+    }
+
 }
