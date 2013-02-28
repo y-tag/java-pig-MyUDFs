@@ -1,7 +1,20 @@
 java-pig-MyUDFs
 ===========================
 
-Now, under developing.
+Apache Pig UDFs for machine learning.
+For more detail, please refer the following paper.
+
+Large-scale machine learning at twitter, SIGMOD 2012
+http://dl.acm.org/citation.cfm?id=2213958
+
+GettingStarted
+--------------
+
+For building jar file, just using maven.
+
+  $ mvn build
+
+For executing, please see .pig files in 'src/main/scripts/' directory.
 
 AUTHOR
 ------
