@@ -86,6 +86,8 @@ public class Pegasos extends BinaryOnlineClassifier {
             this.snorm += this.weightArray[i] * this.weightArray[i];
         }
 
+        this.labelList = new ArrayList<Integer>(this.k);
+        this.featuresList = new ArrayList<Map<String, Float>>(this.k);
     }
 
     @Override
